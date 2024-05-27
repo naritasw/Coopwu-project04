@@ -12,6 +12,7 @@ import CreateProduct from './views/CreateProduct';
 import DetailProduct from './views/DetailProduct';
 import EditProduct from './views/EditProduct';
 import Checkout from './views/Checkout';
+import CartProduct from './views/CartProduct';
 
 
 function App() {
@@ -27,6 +28,9 @@ function App() {
           <Route path='/CreateProduct' element={<CreateProduct />} />
           <Route path='/Product/edit/:id' element={<EditProduct />} />
           <Route path='/Checkout/:id' element={<Checkout />} />
+          <Route path='/Cart' element={<CartProduct />} />
+
+          
         </Routes>
         <Footer />
       </BrowserRouter>
@@ -35,3 +39,4 @@ function App() {
 }
 
 export default App;
+

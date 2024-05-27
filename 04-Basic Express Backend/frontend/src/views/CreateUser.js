@@ -9,7 +9,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 function CreateUser() {
   // const [searchTerm, setSearchTerm] = useState("");
   const [isReady, setIsReady] = useState(true);
-  const {control, handleSubmit, setValue, getValues } = useForm();
+  const {control, handleSubmit, setValue, } = useForm();
 
   const handleCreateUser = (data) => {
     console.log("data", data);
