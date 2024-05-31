@@ -7,11 +7,12 @@ import {
     Typography,
     LinearProgress,
     IconButton,
-    Button,
     InputAdornment,
     Input,
     CardMedia,
-    CardActions
+    CardActions,
+    Badge,
+    Button
 } from "@mui/material";
 import _ from 'lodash';
 import axios from "axios";
@@ -25,16 +26,14 @@ function DetailProduct() {
     const [products, setProducts] = useState([]);
     const [isReady, setIsReady] = useState(false);
     const [cart, setCart] = useState([]);
-    const [rerender, setRerender] = useState(false)
+    const [rerender, setRerender] = useState(false);
 
     const getAllProduct = () => {
         setIsReady(false);
         axios
             .get(`${process.env.REACT_APP_API_URL}/product`)
             .then((res) => {
-                if (res?.data?.rows) {
-                    setProducts(res.data.rows);
-                }
+                setProducts(res?.data?.rows);
                 setIsReady(true);
                 console.log("Product ", res?.data?.rows);
             })
@@ -47,7 +46,31 @@ function DetailProduct() {
 
     useEffect(() => {
         getAllProduct();
-    }, []);
+        const savedCart = JSON.parse(localStorage.getItem("cart"));
+        if (savedCart) {
+            setCart(savedCart);
+        }
+    }, [rerender]);
+
+    const addToCart = (product) => {
+        if (product.stock <= 0) {
+            alert('สินค้าหมด');
+            return;
+        }
+
+        const selectedProduct = _.find(cart, item => item.product._id === product._id);
+        const selectedProductIndex = _.findIndex(cart, item => item.product._id === product._id);
+        if (selectedProduct) {
+            selectedProduct.quantity = selectedProduct.quantity + 1;
+            cart[selectedProductIndex] = selectedProduct;
+        } else {
+            cart.push({ product: product, quantity: 1 });
+        }
+
+        setCart([cart]);
+        localStorage.setItem("cart", JSON.stringify(cart));
+        setRerender(!rerender);
+    };
 
     if (!isReady) {
         return (
@@ -56,13 +79,6 @@ function DetailProduct() {
             </div>
         );
     }
-
-    // const selectedProduct = _.find(cart, { product: each });
-    // if (selectedProduct) {
-    //   selectedProduct.quantity += 1;
-    // } else {
-    //   cart.push({ product: each, quantity: 1 });
-    // }
 
     return (
         <div className='min-h-screen bg-gray-100 p-4'>
@@ -80,11 +96,13 @@ function DetailProduct() {
                                     </InputAdornment>
                                 }
                             />
-                            <Button
-                                startIcon={<ShoppingCartOutlinedIcon />}
-                                style={{ color: 'black' }}
-                            >
-                            </Button>
+                            <Link to='/Cart'>
+                                <IconButton>
+                                    <Badge badgeContent={cart.length} color="primary">
+                                        <ShoppingCartOutlinedIcon style={{ color: 'black' }} />
+                                    </Badge>
+                                </IconButton>
+                            </Link>
                         </CardContent>
                     </Card>
                     <br />
@@ -92,26 +110,19 @@ function DetailProduct() {
                         <div>
                             ค้นหา : <span className='text-blue-500'>{searchTerm}</span>
                         </div>
+                        <div>
+                            {/* <TablePagination
+                                component="div"
+                                count={100}
+                                page={page}
+                                onPageChange={handleChangePage}
+                                rowsPerPage={rowsPerPage}
+                                onRowsPerPageChange={handleChangeRowsPerPage}
+                            /> */}
+                            {/* <Pagination count={10} /> */}
+                        </div>
                     </div>
                     <br />
-                    <div>
-                        <div>สินค้าในตะกร้า</div>
-                        {_.map(cart, (product, index) => (
-                            <div key={index}>
-                                {product?.product?.productname}{' '}
-                                <Button
-                                    onClick={() => {
-                                        cart.splice(index, 1);
-                                        setCart([...cart]);
-                                        setRerender(!rerender);
-                                    }}
-                                >
-                                    ลบ
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
-
                     <Grid container spacing={0.5}>
                         {products.filter(product => product.productname.toLowerCase().includes(searchTerm.toLowerCase())).map((product, index) => (
                             <Grid item key={index} xs={6} sm={3} md={2} lg={2} style={{ display: 'flex', justifyContent: 'center' }}>
@@ -133,25 +144,18 @@ function DetailProduct() {
                                         </CardContent>
                                     </Link>
                                     <CardActions style={{ justifyContent: 'space-between' }}>
-                                        <IconButton
-                                            aria-label="Add to Cart"
-                                            onClick={() => {
-                                                const selectedProduct = _.find(cart, productProductInCard => productProductInCard?.product?._id === product?._id)
-                                                if (selectedProduct ){
-                                                 selectedProduct.quantity = selectedProduct.quantity + 1
-                                                }
-                                                else {
-                                                 cart.push({ product:product,quantity:1 })
-                                                }
-                                                 
-                                                 setCart(cart)
-                                                 console.log(cart)
-                                                 setRerender(!rerender)
-                                         }}>
-
-                                            <AddShoppingCartIcon />
-                                        </IconButton>
-
+                                        {product.stock > 0 ? (
+                                            <IconButton
+                                                aria-label="Add to Cart"
+                                                onClick={() => addToCart(product)}
+                                            >
+                                                <AddShoppingCartIcon />
+                                            </IconButton>
+                                        ) : (
+                                            <Button disabled style={{ color: 'red' }}>
+                                                สินค้าหมด
+                                            </Button>
+                                        )}
                                         <Link to={`/Product/edit/${product?._id}`}>
                                             <IconButton aria-label="Edit">
                                                 <EditOutlinedIcon />
@@ -164,7 +168,7 @@ function DetailProduct() {
                     </Grid>
                 </div>
             </div>
-        </div >
+        </div>
     );
 }
 

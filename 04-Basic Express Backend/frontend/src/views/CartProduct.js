@@ -1,225 +1,188 @@
-// import React, { useState, useEffect } from "react";
-// import {
-//     Card,
-//     Grid,
-//     CardContent,
-//     Typography,
-//     IconButton,
-//     CardMedia,
-//     CardActions,
-//     Checkbox,
-//     FormControlLabel
-// } from "@mui/material";
-// import { Link } from "react-router-dom";
-// import DeleteIcon from '@mui/icons-material/Delete';
-
-
-// function Cart() {
-//     const [cart, setCart] = useState([]);
-//     const [selectedItems, setSelectedItems] = useState([]);
-
-//     useEffect(() => {
-//         const savedCart = JSON.parse(localStorage.getItem("cart"));
-//         if (savedCart) {
-//             setCart(savedCart);
-//         }
-//     }, []);
-
-//     const removeFromCart = (productToRemove) => {
-//         const updatedCart = cart.filter(product => product._id !== productToRemove._id);
-//         setCart(updatedCart);
-//         localStorage.setItem("cart", JSON.stringify(updatedCart));
-//     };
-
-//     const handleCheckboxChange = (product) => {
-//         setSelectedItems(prevSelectedItems => {
-//             if (prevSelectedItems.includes(product._id)) {
-//                 return prevSelectedItems.filter(item => item !== product._id);
-//             } else {
-//                 return [prevSelectedItems, product._id];
-//             }
-//         });
-//     };
-
-//     return (
-//         <div className='min-h-screen bg-gray-100 p-4'>
-//             <div className='flex justify-center flex-wrap'>
-//                 <div className='lg:w-3/4 w-full'>
-//                     <Typography variant="h6" gutterBottom>
-//                         สินค้าในตะกร้า
-//                     </Typography>
-//                     <Grid container spacing={2}>
-//                         {cart.length > 0 ? cart.map((product, index) => (
-//                             <Grid item key={index} xs={12}>
-//                                 <Card style={{ display: 'flex', alignItems: 'center', padding: '10px' }}>
-//                                     <FormControlLabel
-//                                         control={
-//                                             <Checkbox
-//                                                 checked={selectedItems.includes(product._id)}
-//                                                 onChange={() => handleCheckboxChange(product)}
-//                                             />
-//                                         }
-//                                         label=""
-//                                     />
-//                                     <Link to={`/Checkout/${product?._id}`} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
-//                                         <CardMedia
-//                                             component="img"
-//                                             image={product?.image?.url}
-//                                             alt={product.productname}
-//                                             style={{ width: '100px', height: '100px', objectFit: 'cover', marginRight: '10px' }}
-//                                         />
-//                                         <CardContent style={{ flex: '1' }}>
-//                                             <Typography variant="h6" noWrap>
-//                                                 {product.productname}
-//                                             </Typography>
-//                                             <Typography variant="body2" color="textSecondary" noWrap>
-//                                                 ฿ {product.price} บาท
-//                                             </Typography>
-//                                         </CardContent>
-//                                     </Link>
-//                                     <CardActions>
-//                                         <IconButton
-//                                             aria-label="Remove from Cart"
-//                                             onClick={() => removeFromCart(product)}
-//                                         >
-//                                             <DeleteIcon />
-//                                         </IconButton>
-//                                     </CardActions>
-//                                 </Card>
-//                             </Grid>
-//                         )) : (
-//                             <Typography variant="h6" style={{ width: '100%', textAlign: 'center' }}>
-//                                 ไม่มีสินค้า
-//                             </Typography>
-//                         )}
-//                     </Grid>
-//                 </div>
-//             </div>
-//         </div>
-//     );
-// }
-
-// export default Cart;
-
-
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Button,
-  Card,
-  CardContent,
-  Input,
-  LinearProgress,
-  Table,
-} from "@mui/joy";
-import axios from "axios";
-import _ from "lodash";
+    Card,
+    CardContent,
+    Typography,
+    Button,
+    CardActions,
+    IconButton,
+    Grid,
+    CardMedia,
+    Checkbox,
+    FormControlLabel,
+    Box
+} from "@mui/material";
+import DeleteIcon from '@mui/icons-material/Delete';
+import RemoveIcon from '@mui/icons-material/Remove';
+import AddIcon from '@mui/icons-material/Add';
 
-function Cart() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [Cart, setCart] = useState([]);
-  const [isReady, setIsReady] = useState(false);
+function CartProduct({ cart, setCart }) {
+    const [selectedItems, setSelectedItems] = useState([]);
+    const [totalPrice, setTotalPrice] = useState(0);
+    const navigate = useNavigate();
 
-      useEffect(() => {
+    useEffect(() => {
         const savedCart = JSON.parse(localStorage.getItem("cart"));
         if (savedCart) {
             setCart(savedCart);
         }
-    }, []);
+    }, [setCart]);
 
-//   const getAllUser = () => {
-//     setIsReady(false);
-//     axios
-//       .get(`${process.env.REACT_APP_API_URL}/user`)
-//       .then((res) => {
-//         setCart(res?.data?.rows);
-//         setIsReady(true);
-//         console.log("User ", res?.data?.rows);
-//       })
-//       .catch((error) => {
-//         console.error("Error", error?.message);
-//       });
-//   };
+    useEffect(() => {
+        const price = selectedItems.reduce((total, item) => total + item.product.price * item.quantity, 0);
+        setTotalPrice(price);
+    }, [selectedItems, cart]);
 
-//   useEffect(() => {
-//     getAllUser();
-//     return () => { };
-//   }, []);
+    const handleRemoveFromCart = (index) => {
+        const newCart = [...cart];
+        newCart.splice(index, 1);
+        setCart(newCart);
+        updateLocalStorage(newCart);
+    };
 
-//   const handleDeleteUser = (userId) => {
-//     axios
-//       .delete(`${process.env.REACT_APP_API_URL}/user/${userId}`)
-//       .then((res) => {
-//         getAllUser();
-//       })
-//       .catch((error) => {
-//         alert(error?.message);
-//         console.error("Error", error?.message);
-//       });
-//   };
+    const handleIncrement = (index) => {
+        const newCart = [...cart];
+        newCart[index].quantity = Math.min(newCart[index].quantity + 1, newCart[index].product.stock);
+        setCart(newCart);
+        updateLocalStorage(newCart);
+        if (selectedItems.indexOf(newCart[index]) !== -1) {
+            const updatedSelectedItems = [...selectedItems];
+            setSelectedItems(updatedSelectedItems);
+        }
+    };
 
-  if (!isReady) {
+    const handleDecrement = (index) => {
+        const newCart = [...cart];
+        newCart[index].quantity = Math.max(newCart[index].quantity - 1, 1);
+        setCart(newCart);
+        updateLocalStorage(newCart);
+        if (selectedItems.indexOf(newCart[index]) !== -1) {
+            const updatedSelectedItems = [...selectedItems];
+            setSelectedItems(updatedSelectedItems);
+        }
+    };
+
+    const handleSelectItem = (index) => {
+        const selectedIndex = selectedItems.indexOf(cart[index]);
+        let newSelectedItems = [];
+
+        if (selectedIndex === -1) {
+            newSelectedItems = newSelectedItems.concat(selectedItems, cart[index]);
+        } else if (selectedIndex === 0) {
+            newSelectedItems = newSelectedItems.concat(selectedItems.slice(1));
+        } else if (selectedIndex === selectedItems.length - 1) {
+            newSelectedItems = newSelectedItems.concat(selectedItems.slice(0, -1));
+        } else if (selectedIndex > 0) {
+            newSelectedItems = newSelectedItems.concat(
+                selectedItems.slice(0, selectedIndex),
+                selectedItems.slice(selectedIndex + 1),
+            );
+        }
+
+        setSelectedItems(newSelectedItems);
+    };
+
+    const updateLocalStorage = (newCart) => {
+        localStorage.setItem("cart", JSON.stringify(newCart));
+    };
+
+    const handleCheckout = () => {
+        navigate('/Order', { state: { selectedItems } });
+    };
+
     return (
-      <div>
-        <LinearProgress />
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className='min-h-screen'>
-        <div className='flex justify-center  flex-wrap'>
-          <div className='lg:w-3/4'>
-            <Card>
-              <CardContent>
-                <div>Search Box</div>
-                <Input
-                  placeholder='Input Some Search Word'
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <div>
-                  You Search <span className='text-blue-500'>{searchTerm}</span>
+        <div className='min-h-screen bg-gray-100 p-4'>
+            <div className='flex justify-center flex-wrap'>
+                <div className='lg:w-3/4 w-full'>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h5">
+                                สินค้าในตะกร้า
+                            </Typography>
+                            {cart.length === 0 ? (
+                                <Typography variant="body1">
+                                    ไม่มีสินค้าในตะกร้า
+                                </Typography>
+                            ) : (
+                                cart.map((item, index) => (
+                                    <Card key={index} style={{ marginBottom: '10px' }}>
+                                        <Grid container alignItems="center">
+                                            <Grid item xs={1}>
+                                                <FormControlLabel
+                                                    control={
+                                                        <Checkbox
+                                                            checked={selectedItems.indexOf(item) !== -1}
+                                                            onChange={() => handleSelectItem(index)}
+                                                        />
+                                                    }
+                                                />
+                                            </Grid>
+                                            <Grid item xs={2}>
+                                                <CardMedia
+                                                    component="img"
+                                                    image={item.product.image.url}
+                                                    alt={item.product.productname}
+                                                    style={{ height: 100, width: 100 }}
+                                                />
+                                            </Grid>
+                                            <Grid item xs={8}>
+                                                <CardContent>
+                                                    <Typography variant="h6">
+                                                        {item.product.productname}
+                                                    </Typography>
+                                                    <Grid container alignItems="center" wrap="nowrap">
+                                                        <Typography component="span">
+                                                            จำนวน:
+                                                        </Typography>
+                                                        <Button onClick={() => handleDecrement(index)} aria-label="RemoveIcon" disabled={item.quantity <= 1}>
+                                                            <RemoveIcon />
+                                                        </Button>
+                                                        <Typography component="span" sx={{ marginX: 2, minWidth: 40, textAlign: 'center' }}>
+                                                            {item.quantity}
+                                                        </Typography>
+                                                        <Button onClick={() => handleIncrement(index)} aria-label="AddIcon">
+                                                            <AddIcon />
+                                                        </Button>
+                                                    </Grid>
+                                                    <Typography variant="body2">
+                                                        ราคา: {item.product.price * item.quantity} บาท
+                                                    </Typography>
+                                                </CardContent>
+                                            </Grid>
+                                            <Grid item xs={1}>
+                                                <CardActions>
+                                                    <IconButton
+                                                        aria-label="ลบ"
+                                                        onClick={() => handleRemoveFromCart(index)}
+                                                    >
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </CardActions>
+                                            </Grid>
+                                        </Grid>
+                                    </Card>
+                                ))
+                            )}
+                            <Box display="flex" justifyContent="flex-end" alignItems="center" marginTop="10px">
+                                <Typography variant="h6" marginRight="20px">
+                                    ราคารวม: {totalPrice} บาท
+                                </Typography>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    disabled={selectedItems.length === 0}
+                                    onClick={handleCheckout}
+                                >
+                                    ชำระเงิน
+                                </Button>
+                            </Box>
+                        </CardContent>
+                    </Card>
                 </div>
-              </CardContent>
-            </Card>
-            <div>
-              <h3 className='font-bold'>User List</h3>
-              <Table>
-                <thead>
-                  <tr>
-                    <th>ลำดับที่</th>
-                    <th>สินค้า</th>
-                    <th>ราคาต่อชิ้น</th>
-                    <th>จำนวน</th>
-                    <th>ราคารวม</th>
-                    <th>ดำเนินการ</th>
-                  </tr>
-                </thead>
-                {_.map(Cart, (eachCart, index) => (
-                  <tr>
-                    <td>{index + 1}</td>
-                    <td>{eachCart?.productname}</td>
-                    <td>{eachCart?.productname}</td>
-                    <td>{eachCart?.productname}</td>
-                    <td>{eachCart?.productname}</td>
-                    <td>
-                      {/* <Button
-                        color='danger'
-                        onClick={() => handleDeleteUser(eachCart?._id)}
-                      >
-                        ลบ
-                      </Button> */}
-                    </td>
-                  </tr>
-                ))}
-              </Table>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
 
-export default Cart;
+export default CartProduct;

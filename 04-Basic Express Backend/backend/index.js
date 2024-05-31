@@ -4,6 +4,7 @@ const cors = require("cors");
 const userRouter = require("./routes/user.routes");
 const productRouter = require("./routes/product.routes");
 const ImageRouter = require("./routes/image.routes");
+const orderRouter = require("./routes/order.routes");
 
 const app = express();
 const port = 3001;
@@ -24,6 +25,8 @@ mongoose.connect(uri).then(
 app.use("/api/user", userRouter);
 app.use("/api/product", productRouter);
 app.use("/api/image", ImageRouter);
+app.use("/api/order", orderRouter);
+// router.use('/order', orderRouter);
 app.listen(port, () => {
   console.log(`App listening on port ${port}`);
 });
